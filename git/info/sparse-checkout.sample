@@ -18,12 +18,18 @@
 # !.gitkeep
 # !.gitmodules
 
+!gruntfile.js
 !Gruntfile.js
 !package.json
 !.jshintrc
 
 !.editorconfig
 
+!readme.txt
+!readme.html
+!readme.md
+!readme.mdown
+!readme.markdown
 !README.txt
 !README.html
 !README.md
