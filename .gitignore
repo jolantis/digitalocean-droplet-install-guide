@@ -1,0 +1,38 @@
+# ----------------------------------------------------------------------
+# Always-ignore extensions (incl. OS or editor folders/files)
+# ----------------------------------------------------------------------
+
+*~
+*.diff
+*.css.map
+*.esproj
+*.err
+*.log
+*.orig
+*.rej
+*.sass-cache
+*.sublime-project
+*.sublime-workspace
+*.swo
+*.swp
+*.vi
+
+._*
+.buildpath
+.cache
+.com.apple*
+.CVS
+.dropbox
+.DS_Store
+.hg
+.idea
+.project
+.settings
+.svn
+.tmp
+.tmproj
+.tm_properties
+
+intermediate
+publish
+Thumbs.db

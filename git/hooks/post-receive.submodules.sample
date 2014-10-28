@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# An example hook script to update the working tree, including its
+# submodules, after receiving a push.
+#
+# This hook requires core.worktree to be explicitly set, and
+# receive.denyCurrentBranch to be set to false.
+#
+# To enable this hook, rename this file to "post-receive".
+
+# Read standard input or hook will fail
+while read oldrev newrev refname
+do
+:
+done
+
+# Unset GIT_DIR or the universe will implode
+unset GIT_DIR
+
+# Change directory to the working tree; exit on failure
+cd `git config --get core.worktree` || exit
+
+# Force checkout
+git checkout --force
+
+# Force update submodules
+git submodule update --init --recursive --force
+

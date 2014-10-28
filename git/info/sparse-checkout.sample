@@ -1,0 +1,72 @@
+# "Sparse checkout" allows to sparsely populate working directory.
+# It uses skip -worktree bit (see git-update-index(1)) to tell Git
+# whether a file on working directory is worth looking at.
+# http://schacon.github.io/git/git-read-tree.html#_sparse_checkout
+
+# Checkout everything...
+
+*
+
+# Except for the folloing files and/or folders
+
+# Files
+
+!.htaccess
+
+!.gitignore
+!.gitattributes
+# !.gitkeep
+# !.gitmodules
+
+!Gruntfile.js
+!package.json
+!.jshintrc
+
+!.editorconfig
+
+!README.txt
+!README.html
+!README.md
+!README.mdown
+!README.markdown
+
+!assets/javascript/head.scripts.js
+!assets/javascript/main.scripts.js
+!assets/javascript/mobile.scripts.js
+
+# Folders
+
+!assets/javascript/classes/*/*
+!assets/javascript/classes/*
+!assets/javascript/classes/
+
+!assets/javascript/plugins/*/*
+!assets/javascript/plugins/*
+!assets/javascript/plugins/
+
+!assets/javascript/polyfills/*/*
+!assets/javascript/polyfills/*
+!assets/javascript/polyfills/
+
+!assets/javascript/utils/*/*
+!assets/javascript/utils/*
+!assets/javascript/utils/
+
+!assets/javascript/vendor/*/*
+!assets/javascript/vendor/*
+!assets/javascript/vendor/
+
+!assets/stylesheets/scss/*/*/*
+!assets/stylesheets/scss/*/*
+!assets/stylesheets/scss/*
+!assets/stylesheets/scss/
+
+!design/*/*/*/*
+!design/*/*/*
+!design/*/*
+!design/*
+!design/
+
+!grunt/*/*
+!grunt/*
+!grunt/

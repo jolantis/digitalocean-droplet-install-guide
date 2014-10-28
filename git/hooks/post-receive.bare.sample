@@ -1,0 +1,10 @@
+#!/bin/sh
+WWW_DIR=/usr/share/nginx/www/example.com/public
+GIT_DIR=/usr/share/nginx/repo/example.git
+
+# remove any untracked files and directories
+# git --work-tree=${WWW_DIR} clean -fd
+git --work-tree=${WWW_DIR} clean -fd --exclude="content thumbs site/cache index.html"
+
+# force checkout of the latest deploy
+git --work-tree=${WWW_DIR} --git-dir=${GIT_DIR} checkout --force
