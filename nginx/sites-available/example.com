@@ -47,14 +47,6 @@ server {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  # Remove trailing slash
-  rewrite ^/(.+)/$ /$1 permanent;
-
-  # Add trailing slash
-  # rewrite ^(.*[^/])$ $1/ permanent;
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   # Include the basic h5bp config set
   include h5bp/basic.conf;
 
@@ -113,14 +105,6 @@ server {
   location = /50x.html {
     root /usr/share/nginx/www;
   }
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  # Remove trailing slash
-  rewrite ^/(.+)/$ /$1 permanent;
-
-  # Add trailing slash
-  # rewrite ^(.*[^/])$ $1/ permanent;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
