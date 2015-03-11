@@ -12,9 +12,6 @@ server {
   # Listen on both hosts
   server_name example.com www.example.com;
 
-  # Include SSL module
-  include h5bp/directive-only/ssl.conf;
-
   # and redirect to the https host (declared below)
   # avoiding http://www -> https://www -> https:// chain.
   return 301 https://example.com$request_uri;
@@ -95,9 +92,6 @@ server {
 
   # Listen on both hosts
   server_name stage.example.com www.stage.example.com;
-
-  # Include SSL module
-  include h5bp/directive-only/ssl.conf;
 
   # And redirect to the https host (declared below)
   # avoiding http://www -> https://www -> https:// chain.
