@@ -46,6 +46,8 @@
   # A Simple Tweak for Making 'git rebase' Safe on OS X (http://j.mp/1gtQGuh)
   trustctime = false
   sparsecheckout = true
+  # Set to false (or umask) to use permissions reported by umask
+  sharedRepository = false
 [filter "media"]
   clean = git-media-clean %f
   smudge = git-media-smudge %f
