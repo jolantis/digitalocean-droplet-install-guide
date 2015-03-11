@@ -74,12 +74,12 @@ server {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   # Include the Kirby CMS specific URI config set
-  include kirby/kirby.conf;
+  include kirby/kirby-example.conf;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   # Redirect old forgotten and rusty URIs
-  # include kirby/example.detour.conf;
+  # include kirby/detour-example.conf;
 }
 
 
@@ -158,10 +158,10 @@ server {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   # Include the Kirby CMS specific URI config set
-  include kirby/kirby.conf;
+  include kirby/kirby-example.conf;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   # Redirect old forgotten and rusty URIs
-  # include kirby/example.detour.conf;
+  # include kirby/detour-example.conf;
 }
