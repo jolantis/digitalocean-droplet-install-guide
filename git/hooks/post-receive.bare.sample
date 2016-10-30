@@ -1,6 +1,6 @@
 #!/bin/sh
-WWW_DIR=/usr/share/nginx/www/example.com/public
-GIT_DIR=/usr/share/nginx/repo/example.git
+WWW_DIR=/usr/share/nginx/wwwroot/mysite.com/www
+GIT_DIR=/usr/share/nginx/repo/mysite.com/www.git
 
 # remove any untracked files and directories
 # git --work-tree=${WWW_DIR} clean -fd

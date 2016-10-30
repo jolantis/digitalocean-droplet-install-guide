@@ -21,6 +21,10 @@ server {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 server {
+  # listen [::]:80 accept_filter=httpready; # for FreeBSD
+  # listen 80 accept_filter=httpready; # for FreeBSD
+  # listen [::]:80 deferred; # for Linux
+  # listen 80 deferred; # for Linux
   listen [::]:80;
   listen 80;
 
@@ -28,7 +32,7 @@ server {
   server_name example.com;
 
   # Path for static files
-  root /usr/share/nginx/www/example.com/public;
+  root /usr/share/nginx/wwwroot/example.com/www;
 
   # Index
   index index.html index.htm index.php;
@@ -42,7 +46,14 @@ server {
   # Default 50x page
   error_page 500 502 503 504 /50x.html;
   location = /50x.html {
-    root /usr/share/nginx/www;
+    root /usr/share/nginx/wwwroot;
+  }
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # Let's Encrypt challenge
+  location /.well-known/acme-challenge {
+    root /usr/share/nginx/wwwroot/example.com;
   }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -82,6 +93,10 @@ server {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 server {
+  # listen [::]:80 accept_filter=httpready; # for FreeBSD
+  # listen 80 accept_filter=httpready; # for FreeBSD
+  # listen [::]:80 deferred; # for Linux
+  # listen 80 deferred; # for Linux
   listen [::]:80;
   listen 80;
 
@@ -89,7 +104,7 @@ server {
   server_name stage.example.com;
 
   # Path for static files
-  root /usr/share/nginx/www/stage.example.com/public;
+  root /usr/share/nginx/wwwroot/example.com/stage;
 
   # Index
   index index.php index.html index.htm;
@@ -103,7 +118,14 @@ server {
   # Default 50x page
   error_page 500 502 503 504 /50x.html;
   location = /50x.html {
-    root /usr/share/nginx/www;
+    root /usr/share/nginx/wwwroot;
+  }
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # Let's Encrypt challenge
+  location /.well-known/acme-challenge {
+    root /usr/share/nginx/wwwroot/example.com;
   }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

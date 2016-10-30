@@ -1,0 +1,23 @@
+# ------------------------------------------------------------------------------
+# letsencrypt.com
+# ------------------------------------------------------------------------------
+
+server {
+  # listen [::]:80 accept_filter=httpready; # for FreeBSD
+  # listen 80 accept_filter=httpready; # for FreeBSD
+  # listen [::]:80 deferred; # for Linux
+  # listen 80 deferred; # for Linux
+  listen [::]:80;
+  listen 80;
+
+  # Listen on the non-www host
+  server_name vanwunnik.com www.vanwunnik.com stage.vanwunnik.com www.stage.vanwunnik.com;
+
+  # Specify a charset
+  charset utf-8;
+
+  # Let's Encrypt
+  location /.well-known/acme-challenge {
+	root /usr/share/nginx/wwwroot/vanwunnik.com;
+  }
+}

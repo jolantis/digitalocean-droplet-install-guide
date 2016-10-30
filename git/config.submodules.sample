@@ -3,6 +3,7 @@
 	filemode = true
 	bare = false
 	logallrefupdates = true
+	sparseCheckout = true
 	worktree = ../
 [receive]
-	denyCurrentBranch = false
+	denyCurrentBranch = ignore

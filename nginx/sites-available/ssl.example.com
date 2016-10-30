@@ -18,15 +18,15 @@ server {
 }
 
 server {
-  listen [::]:443 ssl spdy;
-  listen 443 ssl spdy;
+  listen [::]:443 ssl http2;
+  listen 443 ssl http2;
 
   # Listen on the wrong host
   server_name www.example.com;
 
-  # Include SSL and Nginx's SPDY (currently experimental) modules
-  include h5bp/directive-only/ssl.conf;
-  include h5bp/directive-only/spdy.conf;
+  # SLL domain certificates
+  ssl_certificate      /etc/letsencrypt/live/example.com.crt;
+  ssl_certificate_key  /etc/letsencrypt/live/example.com.key;
 
   # And redirect to the non-www host (declared below)
   return 301 https://example.com$request_uri;
@@ -35,18 +35,18 @@ server {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 server {
-  listen [::]:443 ssl spdy;
-  listen 443 ssl spdy;
+  # listen [::]:443 ssl http2 accept_filter=dataready;  # for FreeBSD
+  # listen 443 ssl http2 accept_filter=dataready;  # for FreeBSD
+  # listen [::]:443 ssl http2 deferred;  # for Linux
+  # listen 443 ssl http2 deferred;  # for Linux
+  listen [::]:443 ssl http2;
+  listen 443 ssl http2;
 
   # The host name to respond to
   server_name example.com;
 
-  # Include SSL and Nginx's SPDY (currently experimental) modules
-  include h5bp/direcive-only/ssl.conf;
-  include h5bp/directive-only/spdy.conf;
-
   # Path for static files
-  root /usr/share/nginx/www/example.com/public;
+  root /usr/share/nginx/wwwroot/example.com/www;
 
   # Index
   index index.html index.htm index.php;
@@ -60,7 +60,14 @@ server {
   # Default 50x page
   error_page 500 502 503 504 /50x.html;
   location = /50x.html {
-    root /usr/share/nginx/www;
+    root /usr/share/nginx/wwwroot;
+  }
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # Let's Encrypt challenge
+  location /.well-known/acme-challenge {
+    root /usr/share/nginx/wwwroot/example.com;
   }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -69,6 +76,11 @@ server {
   include h5bp/basic.conf;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # Include SSL and SPDY modules
+  include h5bp/directive-only/ssl.conf;
+  include h5bp/directive-only/extra-security.conf;
+  include h5bp/directive-only/ssl-stapling.conf;
 
   # Include the Kirby CMS specific URI config set
   include kirby/kirby-example.conf;
@@ -99,15 +111,15 @@ server {
 }
 
 server {
-  listen [::]:443 ssl spdy;
-  listen 443 ssl spdy;
+  listen [::]:443 ssl http2;
+  listen 443 ssl http2;
 
   # Listen on the wrong host
   server_name www.stage.example.com;
 
-  # Include SSL and Nginx's SPDY (currently experimental) modules
-  include h5bp/directive-only/ssl.conf;
-  include h5bp/directive-only/spdy.conf;
+  # SLL domain certificates
+  ssl_certificate      /etc/letsencrypt/live/example.com.crt;
+  ssl_certificate_key  /etc/letsencrypt/live/example.com.key;
 
   # And redirect to the non-www host (declared below)
   return 301 https://stage.example.com$request_uri;
@@ -116,18 +128,18 @@ server {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 server {
-  listen [::]:443 ssl spdy;
-  listen 443 ssl spdy;
+  # listen [::]:443 ssl http2 accept_filter=dataready;  # for FreeBSD
+  # listen 443 ssl http2 accept_filter=dataready;  # for FreeBSD
+  # listen [::]:443 ssl http2 deferred;  # for Linux
+  # listen 443 ssl http2 deferred;  # for Linux
+  listen [::]:443 ssl http2;
+  listen 443 ssl http2;
 
   # Listen on the non-www host
   server_name stage.example.com;
 
-  # Include SSL and Nginx's SPDY (currently experimental) modules
-  include h5bp/direcive-only/ssl.conf;
-  include h5bp/directive-only/spdy.conf;
-
   # Path for static files
-  root /usr/share/nginx/www/stage.example.com/public;
+  root /usr/share/nginx/wwwroot/example.com/stage;
 
   # Index
   index index.php index.html index.htm;
@@ -141,13 +153,27 @@ server {
   # Default 50x page
   error_page 500 502 503 504 /50x.html;
   location = /50x.html {
-    root /usr/share/nginx/www;
+    root /usr/share/nginx/wwwroot;
+  }
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # Let's Encrypt challenge
+  location /.well-known/acme-challenge {
+    root /usr/share/nginx/wwwroot/example.com;
   }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   # Include the basic h5bp config set
   include h5bp/basic.conf;
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # Include SSL and SPDY modules
+  include h5bp/directive-only/ssl.conf;
+  include h5bp/directive-only/extra-security.conf;
+  include h5bp/directive-only/ssl-stapling.conf;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
