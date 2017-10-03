@@ -24,7 +24,7 @@
 
 !/.editorconfig
 
-!/.eslintrc.json
+!/.eslintrc
 !/.jshintrc
 
 !readme.txt
