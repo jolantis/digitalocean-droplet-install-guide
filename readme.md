@@ -1,38 +1,17 @@
-# DigitalOcean droplet install guide
+# DigitalOcean Droplet Install Guide
 
-This install guide describes how I have setup a Nginx powered Ubuntu 14.04 droplet on [DigitalOcean](https://www.digitalocean.com) for future reference.
+v1.0 — 2017-10-03
 
-The information recorded is a collection of information found around the web, supplemented with my own lines and insights.
+# Create New (Add) Users
 
-Please ping me or send PR for incorrect or obsolete information.
-
-## Index
-
-1. Add users
-2. Setup SSH Keys
-3. Install Nginx, PHP5-FPM, GD/ImageMagick, Sendmail
-4. Configure Nginx
-5. Setup file permissions (umask)
-6. Configure PHP-FM
-7. Configure Git
-7.1 _Flavour 1_: Bare repository
-7.2 _Flavour 2_: Repository with submodules
-8. Setup Dropbox sync
-9. Setup BitTorrent sync
-10. Set permissions to files and (sub)folders all at one time
-11. Check for AES-NI support
-
-
-## Add users
-
-### Change root password after login
+## Change root password after login
 
 ```
 $ ssh root@<ip address droplet>
 $ passwd
 ```
 
-### Update system
+## Update system
 
 ```
 $ apt-get update
@@ -40,262 +19,523 @@ $ apt-get upgrade
 $ apt-get autoremove && apt-get autoclean
 ```
 
-To also upgrade the Ubuntu distribution version run: `apt-get dist-upgrade`
+To also upgrade the Ubuntu distribution version run:
 
-### Add users
+```
+$ apt-get dist-upgrade
+```
+
+## List all users you can use
+
+```
+$ cut -d: -f1 /etc/passwd
+```
+
+## Remove/delete a user (plus home directory)
+
+```
+$ userdel -f <username>
+$ rm -r /home/<username>
+```
+
+## Modify <username> of a user
+
+```
+$ usermod -l <new_username> <username>
+```
+
+## Change password for a user
+
+```
+$ passwd <username>
+```
+
+## Change details for a user (for example real name):
+
+```
+$ chfn username
+```
+
+## Add new user
 
 ```
 $ adduser <username>
 ```
 
-### Add root privileges for added users
+### [OPTIONAL] Add root privileges
+
+Now, we have a new user account with regular account privileges. However, we may sometimes need to do administrative tasks.
+
+To avoid having to log out of our normal user and log back in as the root account, we can set up what is known as "superuser" or root privileges for our normal account. This will allow our normal user to run commands with administrative privileges by putting the word `sudo` before each command.
+
+To add these privileges to our new user, we need to add the new user to the "sudo" group. By default, on Ubuntu 16.04, users who belong to the "sudo" group are allowed to use the `sudo` command.
+
+As `root`, run this command to add your new user to the sudo group (substitute the highlighted word with your new user):
 
 ```
-$ visudo
+$ usermod -aG sudo sammy
 ```
 
-Now add for every newly added user the following line:
-
-```
-<username>	ALL=(ALL:ALL) ALL
-```
-
-Write out changes to `/etc/sudoers`.
-
-Now log out root user.
+Now the (non-root) user can run commands with superuser privileges! For more information about how this works, check out [this sudoers tutorial](https://www.digitalocean.com/community/tutorials/how-to-edit-the-sudoers-file-on-ubuntu-and-centos).
 
 ### Login with new user
 
 ```
-$ ssh <username>@<ip address droplet>
+$ ssh user@hostname/ip-address
 ```
 
-### Create ‘.bash_profile’
+**Note:** If the server is set up with public key authentication for users (e.g. this is the case on DigitalOcean if an SSH key was selected during Droplet creation), then follow first **Copy the Public (SSH) Key** section of the **Add Public Key Authentication (SSH)** document to be able to login with newly added (non-root) users.
 
-First add a `.bash_profile` file to the user's home directory if not already present (`/root/` or `/home/<username>`):
+---
 
-```
-$ cd ~
-$ touch .bash_profile
-```
+# Add Public Key Authentication (SSH)
 
-### Edit ‘.bash_profile’ file
+The next step in securing the server is to set up public key authentication for user(s). Setting this up will increase the security of the server by requiring a private SSH key to log in.
 
-```
-$ nano .bash_profile
-```
+## Generate a Key Pair
 
-(or edit via Transmit’s SFTP)
+If you do not already have an SSH key pair, which consists of a public and private key, you need to generate one. If you already have a key that you want to use, skip to the **Copy the Public (SSH) Key** step.
 
-Add the following 2 lines to the `.bash_profile` file:
-
-```
-# ~/.bash_profile
-
-export LANGUAGE=en
-export LANG=C
-export LC_MESSAGES=C
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
-```
-
-Reload `.bash_profile` (or open a new Terminal window):
-
-```
-source .bash_profile
-```
-
-### Stop accepting locale from client
-
-```
-$ nano /etc/ssh/sshd_config
-```
-
-(or edit via Transmit’s SFTP)
-
-Now out-comment (add `#`in front of) the following line: `AcceptEnv LANG LC_*`
-
-
-### Stop forwarding locale from client
-
-Open the `ssh_config` file on your local machine in Sublime Text via Terminal:
-
-```
-sublime /etc/ssh_config
-```
-
-Now out-comment (add `#`in front of) the following line: `SendEnv LANG LC_*`
-
-
-### Generate and reconfigure the (missing) locales
-
-Login (again) as root user and generate and reconfigure the (missing) locales:
-
-```
-locale-gen en_US en_US.UTF-8
-dpkg-reconfigure locales
-```
-
-
-### Update (or add) Git config
-
-Upload from the `/git` folder the `gitconfig.sample` config file to user’s home directory (`/root/` or `/home/<username>`) and rename to `.gitconfig`.
-
-Make sure to edit personal information (user name + email).
-
-
-## Setup SSH keys
-
-If there is no `~/.ssh` directory in your user’s home directory already, create one (login with the correct user first!):
-
-```
-$ mkdir ~/.ssh
-```
-
-If there is no `id_rsa` and `id_rsa.pub` key combo, then generate one:
+In Terminal.app:
 
 ```
 $ ssh-keygen -t rsa
 ```
 
-Now from your local machine (assuming your public key can be found at `~/.ssh/id_rsa.pub`) enter the following command in Terminal:
+Hit return to accept file name and path (or enter a new name).
+
+Next, you will be prompted for a passphrase to secure the key with. You may either enter a passphrase or leave the passphrase blank.
+
+This generates a private key, id_rsa, and a public key, id_rsa.pub, in the .ssh directory of the localuser's home directory. Remember that the private key should not be shared with anyone who should not have access to your servers!
+
+## Copy the Public (SSH) Key
+
+After generating an SSH key pair (on your Mac), you will want to copy your public key to your server. There are two easy ways to do this.
+
+*Note:* The `ssh-copy-id` method will not work on DigitalOcean if an SSH key was selected during Droplet creation. This is because DigitalOcean disables password authentication if an SSH key is present, and the `ssh-copy-id` relies on password authentication to copy the key.
+
+If using DigitalOcean and a SSH key was selected during Droplet creation, use option 2 instead.
+
+### *Option 1* — Use ssh-copy-id
+
+Run the ssh-copy-id script by specifying the user and IP address of the server that you want to install the key on, like this:
 
 ```
-$ ssh user@hostname/ipadress 'cat >> ~/.ssh/authorized_keys' < ~/.ssh/id_rsa.pub
+$ ssh-copy-id user@hostname/ip-address
 ```
 
-Now if you close the connection, and then attempt to establish a new SSH connection, you should no longer be prompted for a password!
+After providing the password at the prompt, the public key will be added to the remote user's `.ssh/authorized_keys` file. The corresponding private key can now be used to log into the server.
 
+### *Option 2* — Manually Install the Key
 
-## Install Nginx, PHP5-FPM, GD/ImageMagick and Sendmail
-
-To check if a `packagename` was already installed:
-
-```
-$ dpkg -s <packagename>
-```
-or
+Assuming you generated an SSH key pair using the previous step, use the following command at the terminal of the **local machine** to print your public key (`id_rsa.pub`):
 
 ```
-$ dpkg -l <packagename>
+$ cat ~/.ssh/id_rsa.pub
 ```
 
-### Install Nginx
+This should print your public SSH key, select it, and copy it to your clipboard.
+
+To enable the use of SSH key to authenticate as the new remote user, the public key must be added to a special file in the user's home directory.
+
+On the server, as the `root` user (login via ssh), enter the following command to temporarily switch to the new user (substitute `user` name for your own):
 
 ```
+$ su - user
+```
+
+Now you will be in your new user's home directory.
+
+Create a new directory called `.ssh` and restrict its permissions with the following commands:
+
+```
+$ mkdir ~/.ssh
+$ chmod 700 ~/.ssh
+```
+
+Now open a file in `.ssh` called `authorized_keys` with a text editor (nano) to edit the file:
+
+```
+$ nano ~/.ssh/authorized_keys
+```
+
+Now insert your public key (which copied earlier into the clipboard) by pasting it into the editor.
+
+Hit ctrl-x to exit the file, then y to save the changes that you made, then ENTER to confirm the file name.
+
+Now restrict the permissions of the `authorized_keys` file:
+
+```
+$ chmod 600 ~/.ssh/authorized_keys
+```
+
+Type this command once to return to the root user:
+
+```
+$ exit
+```
+
+Now your public key is installed, and you can use SSH keys to log in as your user.
+
+Repeat for other users.
+
+## Disable Password Authentication (Recommended)
+
+**Note:** Only disable password authentication if you installed a public key to your user as recommended in the previous section, step four. Otherwise, you will lock yourself out of your server!
+
+To disable password authentication on your server, follow these steps.
+
+As **root** or your new sudo user, open the SSH daemon configuration:
+
+```
+$ sudo nano /etc/ssh/sshd_config
+```
+
+Find the line that specifies `PasswordAuthentication`, uncomment it by deleting the preceding `#`, then change its value to “no”. It should look like this after you have made the change:
+
+```
+PasswordAuthentication no
+```
+
+Here are two other settings that are important for key-only authentication and are set by default. If you haven't modified this file before, you do not need to change these settings:
+
+```
+PubkeyAuthentication yes
+ChallengeResponseAuthentication no
+```
+
+When finished making the changes, save and close the file using the same method as before (e.g. ctrl-x, then Y, then ENTER).
+
+Reload the SSH daemon:
+
+```
+$ systemctl reload sshd
+```
+
+---
+
+# Install Nginx, PHP-FPM and ImageMagick/GD
+
+## Install (or update to) latest nginx ‘mainline’ version
+
+The Ubuntu 16.04 LTS on Digital Ocean droplets comes with nginx x.x.x stable. The latest versions, as of the time of this writing, are 1.12.1 [stable](http://j.mp/29yUShv) and 1.13.3 [mainline](http://j.mp/29yUXSn).
+
+So which one should we upgrade to?
+
+[According to nginx](https://www.nginx.com/blog/nginx-1-6-1-7-released/):
+
+> We recommend that in general you deploy the NGINX mainline branch at all times.
+
+So let’s install (or upgrade to) 1.13.3 (note that ‘development’ is the legacy name for ‘mainline’):
+
+```
+$ add-apt-repository ppa:nginx/development
+$ apt-get update
 $ apt-get install nginx
 ```
 
-Test run and then (re)start the installation:
+Note that the installation process may have conflicts with your configuration files. If that’s the case, you will be prompted for an action. I would recommend that you hit `D` to see a diff off the changes and to back that up in a file for later use. Then proceed with `N` (the default) to keep your version. That way, if you find that you do need to change something later, you’ll have a handy diff to refer to.
+
+Finally, run:
+
+```
+$ nginx -v
+```
+
+And you should see:
+
+```
+nginx version: nginx/1.13.3
+```
+
+### Fix “Failed to read PID from file…” issue
+
+Check nginx's status:
+
+```
+$ service nginx status
+```
+
+If the output looks like this *and* it contains the line `nginx.service: Failed to read PID from file…`:
+
+```
+● nginx.service - A high performance web server and a reverse proxy server
+   Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enab
+  Drop-In: /etc/systemd/system/nginx.service.d
+           └─override.conf
+   Active: active (running) since Thu 2017-09-28 18:34:51 UTC; 17h ago
+     Docs: man:nginx(8)
+  Process: 5375 ExecStop=/sbin/start-stop-daemon --quiet --stop --retry QUIT/5 --p
+  Process: 12301 ExecReload=/usr/sbin/nginx -g daemon on; master_process on; -s re
+  Process: 5388 ExecStartPost=/bin/sleep 0.1 (code=exited, status=0/SUCCESS)
+  Process: 5383 ExecStart=/usr/sbin/nginx -g daemon on; master_process on; (code=e
+  Process: 5380 ExecStartPre=/usr/sbin/nginx -t -q -g daemon on; master_process on
+ Main PID: 5387 (nginx)
+    Tasks: 2
+   Memory: 8.9M
+      CPU: 1.287s
+   CGroup: /system.slice/nginx.service
+           ├─ 5387 nginx: master process /usr/sbin/nginx -g daemon on; master_proc
+           └─12305 nginx: worker process
+
+Sep 29 10:56:47 droplet-name systemd[1]: Starting A high performance web server…
+Sep 29 10:56:47 droplet-name systemd[1]: nginx.service: Failed to read PID from file /run/nginx.pid: Invalid argument
+Sep 29 10:56:47 droplet-name systemd[1]: Started A high performance web server…
+```
+
+… then **fix** this issue with the following workaround:
+
+```
+$ mkdir /etc/systemd/system/nginx.service.d
+$ printf "[Service]\nExecStartPost=/bin/sleep 0.1\n" > /etc/systemd/system/nginx.service.d/override.conf
+$ systemctl daemon-reload
+```
+
+Test and restart nginx:
 
 ```
 $ nginx -tt && service nginx restart
 ```
 
-### Install PHP
+Check status again:
 
 ```
-$ apt-get install php5-fpm
+$ service nginx status
 ```
 
-Then (re)start and check:
+The `nginx.service: Failed to read PID from file…` line should now be gone and you can continue…
 
-```
-$ service php5-fpm restart
-$ dpkg -l php5-fpm
-```
+## Uninstall PHP-FPM and dependencies
 
-### Install GD
+Maybe you want to remove older versions of PHP-FMP first…
 
-```
-$ apt-get install php5-gd
-```
-
-Then (re)start and check:
+Check what version is installed, if any:
 
 ```
 $ dpkg --get-selections | grep php
 ```
 
-or
+This will output something like this:
 
 ```
-$ dpkg -l php5-gd
+php5-common					install
+php5-fpm					install
+php5-gd						install
+php5-imagick				install
+php5-json					install
 ```
 
-### Install ImageMagick
+Meaning PHP5-FPM and PHP5-Imagick are installled among some other PHP dependencies. 
+
+Now uninstall PHP-FPM and all its dependencies:
 
 ```
-apt-get install php5-imagick
+$ apt-get -y purge php.*
 ```
 
-(Re)start and check:
+Check if PHP-FPM and its dependencies are completely uninstalled:
 
 ```
 $ dpkg --get-selections | grep php
 ```
 
-or
+### Adding a PPA for PHP 7.1 Packages
+
+A **Personal Package Archive**, or **PPA**, is an Apt repository hosted on Launchpad. PPAs allow third-party developers to build and distribute packages for Ubuntu outside of the official channels. They're often useful sources of beta software, modified builds, and backports to older releases of the operating system.
+
+Ondřej Surý maintains the PHP packages for Debian, and offers a [PPA for PHP 7.1 on Ubuntu](https://launchpad.net/%7Eondrej/+archive/ubuntu/php). Before doing anything else, log in to your system, and add Ondřej's PPA to the system's Apt sources:
 
 ```
-$ dpkg -l php5-imagick
+$ add-apt-repository ppa:ondrej/php
 ```
 
-### Install Sendmail (Optional)
-
-**Optional!** Only install SendMail when planning to implement a contact form to your website.
+Once the PPA is installed, update the local package cache to include its contents:
 
 ```
-apt-get install sendmail
+$ apt-get update
+```
+
+## Install PHP-FPM and dependencies
+
+Install the new PHP-FPM package and its dependencies:
+
+```
+$ apt-get install php7.1-fpm
+```
+
+Open php.ini:
+
+```
+$ nano /etc/php/7.1/fpm/php.ini
+```
+
+And change the `;cgi.fix_pathinfo=1` line to (enable by removing the `;` at the beginning of the line):
+
+```
+cgi.fix_pathinfo = 0
+```
+
+Then (re)start:
+
+```
+$ service php7.1-fpm restart
+```
+
+and test:
+
+```
+$ dpkg --get-selections | grep php
+$ php -v
+```
+
+### Install additional PHP dependencies
+
+At least these additional dependencies are necessary for Kirby CMS to run:
+
+```
+$ apt-get install php7.1-mbstring
+$ apt-get install php7.1-xml
+```
+
+## Install Image/Thumb Comversion Extension
+
+### Option 1: ImageMagick + PHP Extension (recommended)
+
+Check the version of imagemagick available:
+
+```
+$ apt-cache policy imagemagick
+```
+
+If you want to uninstall an old(er) version, run (changing the version number to match that installed):
+
+```
+dpkg -r imagemagick-6.7.7.10
+```
+
+Install ImageMagick:
+
+```
+apt-get install imagemagick
+```
+
+Sometimes it is necessary to reboot your droplet before to continue:
+
+```
+$ reboot
+```
+
+Install ImageMagick PHP Extension:
+
+```
+$ apt-get install php-imagick
 ```
 
 (Re)start and check:
 
 ```
-$ dpkg -l sendmail
+$ service php7.1-fpm restart
+$ nginx -tt && service nginx restart
+$ dpkg --get-selections | grep php
 ```
 
-Now configure sendmail:
+### Options 2: GD PHP Extension
+
+If you don't want to use the better option of ImageMagick, then continue with onstalling the GD dependency…
+
+Check the version of GD available:
 
 ```
-$ sendmailconfig
+$ apt-cache policy php-gd
 ```
 
-(basically say ‘Y’ to all questions)
-
-Edit the `/etc/hosts` file (replace the `127.0.0.1 …` / `127.0.1.1 …` lines with):
+Install the GD PHP dependency:
 
 ```
-127.0.0.1   localhost.localdomain   localhost
-127.0.1.1   hostname.mysite.com    hostname/do-droplet-name
-ip-address/do-droplet-ip   hostname.mysite.com   hostname/do-droplet-name
+$ apt-get install php-gd
 ```
 
-- examples of hostname.mysite.com are: `studiodumbar.com`, `stage.studiodumbar.com`, etc.
-- to get hostname/do-droplet-name, type: `hostname`, and…
-- to get ip-address/do-droplet-ip, type: `hostname -I`
-- when the hostname.mysite.com is `stage.mysite.com`, the hostname/do-droplet-name `carrot`, and the ip-address/do-droplet-ip `177.55.162.226`, the configuration should look like this:
+(Re)start and check:
 
 ```
-127.0.0.1   localhost.localdomain   localhost
-127.0.1.1   stage.mysite.com   carrot
-177.55.162.226   stage.mysite.com   carrot
+$ service php-fpm7.0 restart
+$ nginx -tt && service nginx restart
+$ dpkg --get-selections | grep php
 ```
 
-Now restart hostname: `service hostname restart`
+## Configure PHP-FM
 
-**More infromation**
+PHP-FPM creates and manages a pool of php processes, also called workers that receive and server requests to execute php files from the web directory. Now fpm can run multiple separate pools each with its own uid/gid.
 
-- When you use multiple domains (e.g. `mysite.com`, `my.mysite.com` or `another-mysite.com`) on the same DigitalOcean droplet, then please let me now _how to configure to send from multiple domains_?
-- Read more about [Setting the Hostname & Fully Qualified Domain Name (FQDN) on Ubuntu 12.04 or CentOS 6.4](https://github.com/DigitalOcean-User-Projects/Articles-and-Tutorials/blob/master/set_hostname_fqdn_on_ubuntu_centos.md)
-- To apply the new host name without rebooting the system type: `hostname mysite.com`, and then then check if the correct FQDN is set: `hostname -f`
+On Ubuntu, the directory that contains the pool configuration files is:
 
+```
+/etc/php/7.1/fpm/pool.d/
+```
 
-## Configure Nginx
+A default file `www.conf` already exists which can be copied to create more pool configuration files. Each file must end with `.conf` to be recognised as a pool configuration file by PHP-FPM.
 
-Login (SFTP) as `root` user with Transmit f.i.
+### Copy conf file
 
-### Upload config files
+Create a copy of the `www.conf` file and rename it:
+
+```
+mysite.conf
+```
+
+Backup (rename) `www.conf` by adding a tilde: `www.conf~`
+
+### Edit conf file
+
+Edit fields in `mysite.conf` file.
+
+First the pool name `[www]`. It is on the top of the file. Rename it to `[mysite]`:
+
+```
+; pool name ('www' here)
+[mysite]
+```
+
+The user and group fields:
+
+```
+; will be used.
+user = mysite
+group = mysite
+```
+
+And last edit the socket file path (every pool should have its own separate socket):
+
+```
+; Note: This value is mandatory.
+listen = /run/php/php7.1-fpm-mysite.sock
+```
+
+Now restart PHP-FPM:
+
+```
+$ service php7.1-fpm restart
+```
+
+[source](http://www.binarytides.com/php-fpm-separate-user-uid-linux/)
+
+## Create website folder(s)
+
+The (default) location of the web root is `/usr/share/nginx/html`.
+
+Create root folder and domein folder:
+
+```
+$ mkdir -p /usr/share/nginx/wwwroot/example.com/www
+```
+
+From here on follow the instructions outlined in the **Install Git and Deploy Site Files** document… off course after finishing the final steps below!
+
+## Configure nginx
+
+Login (via SFTP) as `root` user with Transmit f.i.
+
+### Upload nginx Config Files
 
 Backup the default `nginx.conf` and `mime.types` files by adding a tilde to the file name: `nginx.conf~` and `mime.types~`
 
@@ -303,26 +543,21 @@ Now upload from the `/nginx` folder both the `nginx.conf` and `mime.types` files
 
 Upload from the `/nginx` folder the config files to: `/etc/nginx`, frist the `hbp5` and (when using Kirby CMS) the `kirby` folders.
 
-Now rename `kirby-mysite.conf` file to reflect your project:
+Now rename `kirby-example.conf` file to reflect your project: `kirby-mysite.conf`
+
+Update the line `fastcgi_pass unix:/var/run/php7.1-fpm-example.sock;` in `kirby-mysite.conf` to link to the correct mysite socket (to be created later in the ‘configure php-fm’ see below!):
 
 ```
-kirby-mysite.conf
-```
-
-Update the line `fastcgi_pass unix:/var/run/php5-fpm-mysite.sock;` in `kirby-mysite.conf` to link to the correct mysite socket (to be created later the ‘configure php-fm’ see below!):
-
-```
-fastcgi_pass unix:/var/run/php5-fpm-mysite.sock;
+fastcgi_pass unix:/var/run/php/php7.0-fpm-mysite.sock;
 ```
 
 ### Sites available
 
-Delete the `default` file in the `sites-available` folder and upload (again from the `/nginx` folder) the following files three:
+Delete the `default` file in the `sites-available` folder and upload (again from the `/nginx` folder) the following files:
 
-- no-default
-- sll.no-default
-- mysite.com
-- ssl.mysite.com
+* no-default
+* mysite.com
+* ssl.mysite.com
 
 (Make sure to delete the `default` symlink in `sites-enabled`!)
 
@@ -341,147 +576,118 @@ $ ln -s /etc/nginx/sites-available/mysite.com /etc/nginx/sites-enabled/mysite.co
 $ ln -s /etc/nginx/sites-available/no-default /etc/nginx/sites-enabled/no-default
 ```
 
-### Test and restart nginx
+And for HTTPS enabled sites:
+
+```
+$ ln -s /etc/nginx/sites-available/sll.no-default /etc/nginx/sites-enabled/ssl.no-default
+```
+
+Test and restart nginx:
 
 ```
 nginx -tt && service nginx restart
 ```
 
+---
 
-## Setup file permissions (umask)
+# Add .gitconfig
 
-Umask defines the default set of file and folder permissions.
-
-### Umask modes explained
-
-- The default **umask 002** used for normal user. With this mask default directory permissions are `775` and default file permissions are `664`.
-- The default **umask for the root user is 022** result into default directory permissions are `755` and default file permissions are `644`.
-- For directories, the **base permissions** are (rwxrwxrwx) `0777` and for files they are `0666` (rw-rw-rw).
-
-In short,
-
-- A umask of `022` allows only you to write data, but anyone can read data.
-- A umask of `077` is good for a completely private system. No other user can read or write your data if umask is set to 077.
-- A umask of `002` is good when you share data with other users in the same group. Members of your group can create and modify data files; those outside your group can read data file, but cannot modify it. Set your umask to `007` to completely exclude users who are not group members.
-
-### Set umask mode for user
-
-For my use I need to set the umask mode to `002`…
-
-Both Debian and Ubuntu ship with `pam_umask`. This allows you to configure umask in `/etc/login.defs` and have them apply system-wide, regardless of how a user logs in.
-
-To enable it, you may need to add a line to `/etc/pam.d/common-session` reading:
+## Login to your droplet
 
 ```
-session optional pam_umask.so
+$ ssh user@hostname/ip-address
 ```
 
-Or it may already be enabled. Then edit `/etc/login.defs` and change the `UMASK` line to:
+## Create ‘.gitconfig’ file
+
+Add a `.gitconfig` file to the user's home directory if not already present (in `/root/` or `/home/user`):
 
 ```
-UMASK		002
+$ cd ~
+$ touch .gitconfig
 ```
 
-(the default is `022`)
-
-Note that users may still override umask in their own `~/.profile` or `~/.bashrc` or similar, but (at least on new Debian and Ubuntu installations) there shouldn't be any overriding of umask in `/etc/profile` or `/etc/bash.bashrc`. (If there are, just remove them.)
-
-### Set umask mode for PHP-FM
-
-Only when PHP-FM is installed and being used continue…
-
-Add to the to `/etc/init/php5-fpm.conf` file, just after line 7 (`stop on runlevel [016]`) the following:
+## Edit ‘.gitconfig’ file
 
 ```
-umask 002
+$ nano .gitconfig
 ```
 
+(or edit via Transmit’s SFTP)
 
-## Configure PHP-FM
-
-PHP-FPM creates and manages a pool of php processes, also called workers that receive and server requests to execute php files from the web directory. Now fpm can run multiple separate pools each with its own uid/gid.
-
-On ubuntu, the directory that contains the pool configuration files is:
+Add the following lines to the `.gitconfig` file:
 
 ```
-/etc/php5/fpm/pool.d/
+[user]
+  name = First Lastname
+  email = example@domain.com
+[push]
+  default = current
+[branch]
+  autosetuprebase = always
+[color]
+  ui = true
+[color "diff"]
+  meta = yellow bold
+  frag = magenta bold
+  old = red bold
+  new = green bold
+  whitespace = red reverse
+[color "status"]
+  added = yellow
+  changed = green
+  untracked = cyan
+[color "branch"]
+  current = yellow reverse
+  local = yellow
+  remote = green
+[alias]
+  # Shortcuts
+  st = status
+  ci = commit
+  br = branch
+  co = checkout
+  df = diff
+  dc = diff --cached
+  ls = ls-files
+  add = "git add ."
+  push = "git push origin head"
+  pull = "git pull"
+  pp = "pull && push"
+  # Logs
+  # lg = log --color --graph --decorate --pretty=oneline --abbrev-commit
+  lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  # Show ignored files:
+  ign = ls-files -o -i --exclude-standard
+  # Check what has changed
+  check = "!f() { git whatchanged $1 -1 | awk '/^:/ {print $NF}'; }; f"
+[core]
+  whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
+  # A Simple Tweak for Making 'git rebase' Safe on OS X (http://j.mp/1gtQGuh)
+  trustctime = false
+  sparsecheckout = true
+  # Set to false (or umask) to use permissions reported by umask
+  sharedRepository = false
+[filter "media"]
+  clean = git-media-clean %f
+  smudge = git-media-smudge %f
+[difftool]
+  prompt = false
 ```
 
-A file called `www.conf` already exists which can be copied to create more pool configuration files. Each file must end with `.conf` to be recognised as a pool configuration file by php fpm.
+Make sure to edit personal information (user name + email).
 
-### Copy conf file
-
-Create a copy of the `www.conf` file and rename it:
-
-```
-mysite.conf
-```
-
-Backup (rename) `www.conf` by adding a tilde: `www.conf~`
-
-### Edit conf file
-
-Edit the following fields in `mysite.conf` file:
-
-- Pool name. It is on the top `[www]`. Rename it to `[mysite]`.
-- The user and group fields:
-
-```
-user = mysite/user
-group = mysite/user
-```
-
-- The socket file name (every pool should have its own separate socket):
-
-```
-listen = /var/run/php5-fpm-mysite.sock
-```
-
-### Socket files
-
-If __not already done__ in ‘configure nginx’ step, make sure the `mysite` site uses the correct socket file to connect to fpm:
-
-Rename the earlier uploaded `/etc/nginx/kirby/kirby-mysite.conf` file to:
-
-```
-kirby-mysite.conf
-```
-
-Update the line `fastcgi_pass unix:/var/run/php5-fpm-exmample.sock;` to link to the correct mysite socket:
-
-```
-fastcgi_pass unix:/var/run/php5-fpm-mysite.sock;
-```
-
-If not already done in ‘configure nginx’ step, open the earlier uploaded and configured `/etc/nginx/sites-available/(ssl.)mysite.com` files, and include the correct kirby conf file created in the previous step:
-
-```
-include kirby/kirby-mysite.conf;
-```
-
-Now login as root user and restart php-fpm:
-
-```
-service php5-fpm restart
-```
-
-[source](http://www.binarytides.com/php-fpm-separate-user-uid-linux/)
+Or upload from the `/git` folder the `gitconfig.sample` file to user’s home directory (`/root/` or `/home/user`) and rename it to `.gitconfig`.
 
 
-## Configure Git
 
 ---
 
-**Flavour 1**
+# Install Git + Deploy Site Files
 
-With bare repositories.
-Do you make use of git submodules? See _flavour 2_ below!
+## Install Git
 
----
-
-### Install Git
-
-Install the [latest Git package for Ubuntu](http://j.mp/1CtAo5o), do:
+To install the [latest Git package for Ubuntu](http://j.mp/1CtAo5o), do:
 
 ```
 $ add-apt-repository ppa:git-core/ppa -y
@@ -491,7 +697,7 @@ $ apt-get autoremove && apt-get autoclean
 $ git --version
 ```
 
-Or to install the most current __stable__ version for Ubuntu, do:
+Or to install the most current _stable_ version for Ubuntu, do:
 
 ```
 $ apt-get install git-core
@@ -499,15 +705,20 @@ $ apt-get autoremove && apt-get autoclean
 $ git --version
 ```
 
+## *Option 1* — Configure Git for ‘bare’ repositories
+
+* This is for ‘bare’ repositories ([what is a bare repository?](http://j.mp/1SeYZAn))
+* Do you yse git submodule? Please see **option 2** below!
+
 ### Create ‘public’ folders
 
 Create the following folders with `root` user (`-p` makes sure all the directories that don’t exists already are created, not just the last one):
 
 ```
-$ mkdir -p /usr/share/nginx/www/mysite.com/public
-$ mkdir -p /usr/share/nginx/www/stage.mysite.com/public
-$ mkdir -p /usr/share/nginx/repo/mysite.git
-$ mkdir -p /usr/share/nginx/repo/stage.mysite.git
+$ mkdir -p /usr/share/nginx/wwwroot/mysite.com/www
+$ mkdir -p /usr/share/nginx/wwwroot/mysite.com/stage
+$ mkdir -p /usr/share/nginx/repo/mysite.com/www.git
+$ mkdir -p /usr/share/nginx/repo/mysite.com/stage.git
 ```
 
 ### Update group and user permissions
@@ -515,20 +726,20 @@ $ mkdir -p /usr/share/nginx/repo/stage.mysite.git
 Now change the group and ownership of the `/public` and `/mysite.git` folders:
 
 ```
-$ sudo chown -R mysite:mysite /usr/share/nginx/www/mysite.com/public
-$ sudo chown -R mysite:mysite /usr/share/nginx/www/stage.mysite.com/public
-$ sudo chown -R mysite:mysite /usr/share/nginx/repo/mysite.git
-$ sudo chown -R mysite:mysite /usr/share/nginx/repo/stage.mysite.git
+$ sudo chown -R mysite:mysite /usr/share/nginx/wwwroot/mysite.com/www
+$ sudo chown -R mysite:mysite /usr/share/nginx/wwwroot/mysite.com/stage
+$ sudo chown -R mysite:mysite /usr/share/nginx/repo/mysite.com/www.git
+$ sudo chown -R mysite:mysite /usr/share/nginx/repo/mysite.com/stage.git
 ```
 
-Move the `/usr/share/nginx/html/50x.html` file to the newly created `/www` directory: `/usr/share/nginx/www`, and then delete the `/html` directory.
+Move the `/usr/share/nginx/html/50x.html` file to the newly created `/wwwroot` directory: `/usr/share/nginx/wwwroot`, and then delete the `/html` directory.
 
-### Initialize _bare_ git repositories
+### Initialize the ‘bare’ Git repositories
 
 Login (SSH) with `mysite` user and initialize the bare Git repositories:
 
 ```
-$ cd /usr/share/nginx/repo/mysite.git
+$ cd /usr/share/nginx/repo/mysite.com/www.git
 $ git init --bare
 ```
 
@@ -538,7 +749,7 @@ $ git init --bare
 
 Make sure to login (either SSH or SFTP) with the correct `mysite` user when uploading the files, otherwise the file group/owner will be incorrect!
 
-Upload to the `/usr/share/nginx/repo/mysite.git/hooks` folder of the bare git repository the `post-receive.bare.sample` file, located in the `/git/hooks` folder (make sure to enter the correct WWW_DIR and GIT_DIR paths) and after uploading rename to `post-receive`.
+Upload to the `/usr/share/nginx/repo/mysite.com/www.git/hooks` folder of the bare git repository the `post-receive.bare.sample` file, located in the `/git/hooks` folder (make sure to enter the correct WWW_DIR and GIT_DIR paths) and after uploading rename to `post-receive`.
 
 Set permissions of the `post-receive` file to `775`.
 
@@ -546,64 +757,48 @@ Repeat for staging (and other possible) (sub)domain(s).
 
 ### Sparse checkout
 
-Upload to the `/usr/share/nginx/repo/mysite.git/info` folder of the bare git repositories the `sparse-checkout.sample` file (set permissions to `664`), located in the `/git/info` folder (make sure to enter the correct path-to-files) and after uploading rename to `sparse-checkout`.
+Upload to the `/usr/share/nginx/repo/mysite.com/www.git/info` folder of the bare git repositories the `sparse-checkout.sample` file (set permissions to `664`), located in the `/git/info` folder (make sure to enter the correct path-to-files) and after uploading rename to `sparse-checkout`.
 
 ### Add remote stage and production repositories
 
 Now add the remote stage and production repositories to your local repository:
 
 ```
-$ git remote add stage ssh://mysite@hostname-or-ip/usr/share/nginx/repo/stage.mysite.git
-$ git remote add production ssh://mysite@hostname-or-ip/usr/share/nginx/repo/mysite.git
+$ git remote add stage ssh://mysite@hostname-or-ip/usr/share/nginx/repo/mysite.com/stage.git
+$ git remote add production ssh://mysite@hostname-or-ip/usr/share/nginx/repo/mysite.com/www.git
 ```
 
----
+## *Option 2* — Configure Git for repositories with submodule(s)
 
-**Flavour 2**
-
-Repositories with submodules. Based on [this article](http://stackoverflow.com/questions/9448682/git-submodule-on-remote-bare#answer-13756592).
-Do you not make use of git submodules? See _flavour 1_ above!
-
----
-
-### Install Git
-
-Install the [latest Git package for Ubuntu](http://j.mp/1CtAo5o), do:
-
-```
-$ add-apt-repository ppa:git-core/ppa -y
-$ apt-get update
-$ apt-get install git
-$ apt-get autoremove && apt-get autoclean
-$ git --version
-```
+* This is for repositories with submodule(s) ([based on this article](http://j.mp/1RfzTfT))
+* Don't you use git submodules? Please see **flavour 1** above!
 
 ### Create ‘public’ folders
 
 Create the following folders with `root` user (`-p` makes sure all the directories that don’t exists already are created, not just the last one):
 
 ```
-$ mkdir -p /usr/share/nginx/www/mysite.com/public
-$ mkdir -p /usr/share/nginx/www/stage.mysite.com/public
+$ mkdir -p /usr/share/nginx/wwwroot/mysite.com/www
+$ mkdir -p /usr/share/nginx/wwwroot/mysite.com/stage
 ```
 
 ### Update group and user permissions
 
-Change group and ownership of the `/public` folders:
+Change group and ownership of the `/www` and `/stage` folders:
 
 ```
-$ sudo chown -R mysite:mysite /usr/share/nginx/www/mysite.com/public
-$ sudo chown -R mysite:mysite /usr/share/nginx/www/stage.mysite.com/public
+$ chown -R mysite:mysite /usr/share/nginx/wwwroot/mysite.com/www
+$ chown -R mysite:mysite /usr/share/nginx/wwwroot/mysite.com/stage
 ```
 
-Move the `/usr/share/nginx/html/50x.html` file to the newly created `/www` directory: `/usr/share/nginx/www`, and then delete the `/html` directory.
+Move the `/usr/share/nginx/html/50x.html` file to the newly created `/wwwroot` directory: `/usr/share/nginx/wwwroot`, and then delete the `/html` directory.
 
 ### Initialize git repositories
 
 Login (SSH) with `mysite` user and initialize the Git repositories:
 
 ```
-$ cd /usr/share/nginx/www/mysite.com/public
+$ cd /usr/share/nginx/wwwroot/mysite.com/www
 $ git init
 ```
 
@@ -613,7 +808,7 @@ $ git init
 
 Make sure to login (either SSH or SFTP) with the correct `mysite` user when uploading the file, otherwise the file group/owner will be incorrect!
 
-Upload to the `/usr/share/nginx/www/mysite.com/.git` folder the `config.submodules.sample` file, located in the `/git` folder, and after uploading rename to `config` (after backing up the original `config` file by adding a tilde: `config~`).
+Upload to the `/usr/share/nginx/wwwroot/mysite.com/www/.git` folder the `config.submodules.sample` file, located in the `/git` folder, and after uploading rename to `config` (after backing up the original `config` file by adding a tilde: `config~`).
 
 Set permissions of the `config` file to `664`.
 
@@ -623,7 +818,7 @@ Repeat for staging (and other (sub)domains).
 
 Make sure to login (either SSH or SFTP) with the correct `mysite` user when uploading the file, otherwise the file group/owner will be incorrect!
 
-Upload to the `/usr/share/nginx/www/mysite.com/.git/hooks` folder the `post-receive.submodules.sample` file, located in the `/git/hooks` folder and after uploading rename to `post-receive`.
+Upload to the `/usr/share/nginx/wwwroot/mysite.com/www/.git/hooks` folder the `post-receive.submodules.sample` file, located in the `/git/hooks` folder and after uploading rename to `post-receive`.
 
 Set permissions of the `post-receive` file to `775`.
 
@@ -631,179 +826,65 @@ Repeat for staging (and other (sub)domains).
 
 ### Sparse checkout
 
-Now add to the `/usr/share/nginx/www/mysite.com/.git/info` folder the `sparse-checkout.sample` file (set permissions to `664`), located in the `/git/info` folder (make sure to enter the correct path-to-files) and after uploading rename to `sparse-checkout`.
+Now add to the `/usr/share/nginx/wwwroot/mysite.com/www/.git/info` folder the `sparse-checkout.sample` file (set permissions to `664`), located in the `/git/info` folder (make sure to enter the correct path-to-files) and after uploading rename to `sparse-checkout`.
 
 ### Add remote stage and production repositories
 
 Now add the remote stage and production repositories to your local repository:
 
 ```
-$ git remote add stage ssh://mysite@hostname-or-ip/usr/share/nginx/www/stage.mysite.com/public
-$ git remote add production ssh://mysite@hostname-or-ip/usr/share/nginx/www/mysite.com/public
+$ git remote add stage ssh://mysite@hostname-or-ip/usr/share/nginx/wwwroot/mysite.com/stage
+$ git remote add production ssh://mysite@hostname-or-ip/usr/share/nginx/wwwroot/mysite.com/www
 ```
 
+---
 
-## Setup Dropbox sync
+# Set Up a Basic Firewall
 
-Login (SHH) with the special `dropbox` user (add user if not done already).
+Ubuntu 16.04 servers can use the UFW firewall to make sure only connections to certain services are allowed. We can set up a basic firewall very easily using this application.
 
-Make sure to be in the dropbox’s home directory:
+Different applications can register their profiles with UFW upon installation. These profiles allow UFW to manage these applications by name. OpenSSH, the service allowing us to connect to our server now, has a profile registered with UFW.
 
-```
-cd ~
-```
-
-### Install Dropbox client
-
-Download and install dropbox client:
+You can see this by typing:
 
 ```
-$ Stable 32-bit: `wget -O dropbox.tar.gz "http://www.dropbox.com/download/?plat=lnx.x86"
+$ ufw app list
 ```
 
-or when running Ubuntu 64-bit:
+Output:
 
 ```
-$ Stable 64-bit: `wget -O dropbox.tar.gz "http://www.dropbox.com/download/?plat=lnx.x86_64"
+Available applications:
+  OpenSSH
 ```
 
-Sanity check to make sure we’re not going to clog our home directory:
+To make sure that the firewall allows SSH connections to be able to log back in next time, allow these connections by typing:
 
 ```
-$ tar -tzf dropbox.tar.gz
+sudo ufw allow OpenSSH
 ```
 
-Now extract:
+Afterwards, the firewall can be enabled by typing:
 
 ```
-$ tar -xvzf dropbox.tar.gz
+sudo ufw enable
 ```
 
-### Run dropboxd
+Type "Y" and press ENTER to proceed. To see that SSH connections are still allowed, type:
 
 ```
-$ ~/.dropbox-dist/dropboxd
+sudo ufw status
 ```
 
-You should see output like this:
+Output:
 
 ```
-This client is not linked to any account... Please visit https://www.dropbox.com/cli_link?host_id=7d44a557aa58f285f2da0x67334d02c1 to link this machine.
+Status: active
+
+To                         Action      From
+--                         ------      ----
+OpenSSH                    ALLOW       Anywhere
+OpenSSH (v6)               ALLOW       Anywhere (v6)
 ```
 
-Go to the URL given, and after success, dropboxd will create a `~/Dropbox` folder and start synchronizing it after this step.
-
-### Dropbox CLI
-
-It is recommended to download the official Dropbox CLI to start the dropbox daemon (as an unprivileged user) and get its status:
-
-```
-$ mkdir -p ~/bin
-$ wget -O ~/bin/dropbox.py "http://www.dropbox.com/download?dl=packages/dropbox.py"
-$ chmod 755 ~/bin/dropbox.py
-$ ~/bin/dropbox.py help
-```
-
-Change the too restrictive default Dropbox folder permissions:
-
-```
-$ chmod 755 ~/Dropbox
-```
-
-Create symlink to the `dropbox` file in the `~/.dropbox-dist/` folder (necessary for folowing steps):
-
-```
-$ ln -s ~/.dropbox-dist/dropbox-lnx.x86-2.10.28/dropbox ~/.dropbox-dist/dropbox
-```
-
-To run dropbox on system startup, login (SSH) as `root` user and then create: `touch /etc/init.d/dropbox`
-
-Edit the newly created file and add the contents of the `/dropbox/dropbox.sample` file to `/et/init.d/dropbox`.
-
-Make the script is executable and add it to the system startup:
-
-```
-$ chmod +x /etc/init.d/dropbox
-$ update-rc.d dropbox defaults
-```
-
-Now control the Dropbox client like any other Ubuntu service:
-
-```
-$ service dropbox start|stop|reload|force-reload|restart|status
-```
-
-### Symlink folders
-
-Still logged in as `root` user, add symbolic links to the `public` content folders of the mysite.com site:
-
-```
-$ mysite.com  `ln -s /home/dropbox/Dropbox/mysite.com/content/ /usr/share/nginx/www/mysite.com/public/content
-$ stage.mysite.com  `ln -s /home/dropbox/Dropbox/mysite.com/content/ /usr/share/nginx/www/stage.mysite.com/public/content
-```
-
-### Notes
-
-- If something went wrong during the install you can try again by deleting all the Dropbox files in the home directory: `rm -rf .dropbox* Dropbox`. And start again by downloading the files you need.
-- If you want to change the Dropbox account it is linked to, unlink it from the first account, then kill the running dropbox process, start it up again (with `~/.dropbox-dist/dropboxd &`) and obtain the new host_id with `dbreadconfig.py`. If you don’t restart the dropbox client, it will give the same host_id (which for some reason causes it to be unable to change the account it is linked to).
-
-
-## Setup BitTorrent sync
-
-TBA
-
-
-## Set permissions to files and (sub)folders all at one time
-
-To change all the directories to 755 (-rwxr-xr-x):
-
-```
-$ find /usr/share/nginx/www/mysite.com/public/ -type d -exec chmod 775 {} \;
-```
-
-$ To change all the files to 644 (-rw-r--r--):
-
-```
-find /usr/share/nginx/www/mysite.com/public/ -type f -exec chmod 664 {} \;
-```
-
-
-## Check for AES-NI support
-
-To use AES NI you need to load the aesni_intel kernel module:
-
-````
-$ /sbin/modinfo aesni_intel
-filename:       /lib/modules/3.0.0-13-generic/kernel/arch/x86/crypto/aesni-intel.ko
-alias:          aes
-license:        GPL
-description:    Rijndael (AES) Cipher Algorithm, Intel AES-NI instructions optimized
-srcversion:     61A51F44F192D7CE0FBA795
-depends:        cryptd,aes-x86_64
-vermagic:       3.0.0-13-generic SMP mod_unload modversions
-````
-
-To see if your CPU supports AES NI check the output of "cat /proc/cpuinfo | grep aes”:
-
-````
-$ cat /proc/cpuinfo | grep aes | wc -l
-4
-````
-
-To check whether or not AES NI is enabled check the contents of /proc/crypto:
-
-````
-$ grep module /proc/crypto | sort -u
-module       : aesni_intel
-module       : aes_x86_64
-module       : arc4
-module       : kernel
-````
-
-To see if OpenSSL supports AES-NI run openssl engine:
-
-````
-$ openssl engine
-(aesni) Intel AES-NI engine
-(dynamic) Dynamic engine loading support
-````
+If you install and configure additional services, you will need to adjust the firewall settings to allow acceptable traffic in. You can learn some common UFW operations in [this guide](https://www.digitalocean.com/community/tutorials/ufw-essentials-common-firewall-rules-and-commands).
