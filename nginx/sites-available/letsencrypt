@@ -3,21 +3,35 @@
 # ------------------------------------------------------------------------------
 
 server {
-  # listen [::]:80 accept_filter=httpready; # for FreeBSD
-  # listen 80 accept_filter=httpready; # for FreeBSD
-  # listen [::]:80 deferred; # for Linux
-  # listen 80 deferred; # for Linux
-  listen [::]:80;
-  listen 80;
+	listen [::]:80 default_server;
+  listen 80 default_server;
 
-  # Listen on the non-www host
-  server_name vanwunnik.com www.vanwunnik.com stage.vanwunnik.com www.stage.vanwunnik.com;
+  # The host name(s) to respond to
+  server_name example.com www.example.com stage.example.com;
+
+  # Path to server root
+  # root /usr/share/nginx/wwwroot/example.com;
+
+  # Log access to this file
+  access_log /var/log/nginx/access.log main;
+
+  # Log errors and warnings to this file
+  error_log /var/log/nginx/error.log warn;
+
+  # Index
+  index index.html index.htm index.php;
 
   # Specify a charset
   charset utf-8;
 
   # Let's Encrypt
-  location /.well-known/acme-challenge {
-	root /usr/share/nginx/wwwroot/vanwunnik.com;
+  # Replace YOURTHUMBPRINT with the key that you got back when you registered: `acme.sh --register-account`
+  location ~ "^/\.well-known/acme-challenge/([-_a-zA-Z0-9]+)$" {
+    default_type text/plain;
+    return 200 "$1.YOURTHUMBPRINT";
+  }
+
+  location / {
+    try_files $uri $uri/index.html $uri.html =404;
   }
 }

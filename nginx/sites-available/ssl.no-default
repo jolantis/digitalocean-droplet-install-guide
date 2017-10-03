@@ -6,10 +6,10 @@
 # returning 444 "no response".
 
 server {
-  listen [::]:443 ssl http2 default_server;
-  listen 443 ssl http2 default_server;
+  listen [::]:443 ssl http2 default_server deferred;
+  listen 443 ssl http2 default_server deferred;
 
-   # SLL domain certificates
+  # SLL domain certificates
   ssl_certificate      /etc/letsencrypt/live/example.com.crt;
   ssl_certificate_key  /etc/letsencrypt/live/example.com.key;
 

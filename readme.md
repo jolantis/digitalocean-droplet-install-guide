@@ -60,6 +60,8 @@ Now add for every newly added user the following line:
 <username>	ALL=(ALL:ALL) ALL
 ```
 
+Write out changes to `/etc/sudoers`.
+
 Now log out root user.
 
 ### Login with new user
@@ -88,6 +90,11 @@ $ nano .bash_profile
 Add the following 2 lines to the `.bash_profile` file:
 
 ```
+# ~/.bash_profile
+
+export LANGUAGE=en
+export LANG=C
+export LC_MESSAGES=C
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 ```
@@ -98,20 +105,27 @@ Reload `.bash_profile` (or open a new Terminal window):
 source .bash_profile
 ```
 
-### Stop forwarding locale from the client
+### Stop accepting locale from client
 
-Open the local `ssh_config` file in Sublime Text via Terminal: 
+```
+$ nano /etc/ssh/sshd_config
+```
+
+(or edit via Transmit’s SFTP)
+
+Now out-comment (add `#`in front of) the following line: `AcceptEnv LANG LC_*`
+
+
+### Stop forwarding locale from client
+
+Open the `ssh_config` file on your local machine in Sublime Text via Terminal:
 
 ```
 sublime /etc/ssh_config
 ```
 
-Now out-comment the following line: `SendEnv LANG LC_*`
+Now out-comment (add `#`in front of) the following line: `SendEnv LANG LC_*`
 
-
-### Update or add ‘.gitconfig’ file
-
-Upload from the `/git` folder the `gitconfig.sample` config file to user’s home directory (`/root/’ or `/home/<username>`) and rename to `.gitconfig`.
 
 ### Generate and reconfigure the (missing) locales
 
@@ -121,6 +135,13 @@ Login (again) as root user and generate and reconfigure the (missing) locales:
 locale-gen en_US en_US.UTF-8
 dpkg-reconfigure locales
 ```
+
+
+### Update (or add) Git config
+
+Upload from the `/git` folder the `gitconfig.sample` config file to user’s home directory (`/root/` or `/home/<username>`) and rename to `.gitconfig`.
+
+Make sure to edit personal information (user name + email).
 
 
 ## Setup SSH keys
@@ -181,7 +202,7 @@ Then (re)start and check:
 
 ```
 $ service php5-fpm restart
-$ check `dpkg -l php5-fpm
+$ dpkg -l php5-fpm
 ```
 
 ### Install GD
@@ -220,7 +241,7 @@ or
 $ dpkg -l php5-imagick
 ```
 
-### Install Sendmail
+### Install Sendmail (Optional)
 
 **Optional!** Only install SendMail when planning to implement a contact form to your website.
 
@@ -246,26 +267,28 @@ Edit the `/etc/hosts` file (replace the `127.0.0.1 …` / `127.0.1.1 …` lines 
 
 ```
 127.0.0.1   localhost.localdomain   localhost
-127.0.1.1   hostname.example.com    hostname/do-droplet-name
-ip-address/do-droplet-ip   hostname.example.com   hostname/do-droplet-name
+127.0.1.1   hostname.mysite.com    hostname/do-droplet-name
+ip-address/do-droplet-ip   hostname.mysite.com   hostname/do-droplet-name
 ```
 
+- examples of hostname.mysite.com are: `studiodumbar.com`, `stage.studiodumbar.com`, etc.
 - to get hostname/do-droplet-name, type: `hostname`, and…
 - to get ip-address/do-droplet-ip, type: `hostname -I`
-- now restart hostname: `service hostname restart`
-- when the domain is `test.example.com`, the hostname/do-droplet-name `carrot`, and the ip-address/do-droplet-ip `177.55.162.226`, the configuration should look like this:
+- when the hostname.mysite.com is `stage.mysite.com`, the hostname/do-droplet-name `carrot`, and the ip-address/do-droplet-ip `177.55.162.226`, the configuration should look like this:
 
 ```
 127.0.0.1   localhost.localdomain   localhost
-127.0.1.1   test.example.com   carrot
-177.55.162.226   test.example.com   carrot
+127.0.1.1   stage.mysite.com   carrot
+177.55.162.226   stage.mysite.com   carrot
 ```
+
+Now restart hostname: `service hostname restart`
 
 **More infromation**
 
-- When you use multiple domains (e.g. `example.com`, `my.example.com` or `another-example.com`) on the same DigitalOcean droplet, then please let me now _how to configure to send from multiple domains_?
+- When you use multiple domains (e.g. `mysite.com`, `my.mysite.com` or `another-mysite.com`) on the same DigitalOcean droplet, then please let me now _how to configure to send from multiple domains_?
 - Read more about [Setting the Hostname & Fully Qualified Domain Name (FQDN) on Ubuntu 12.04 or CentOS 6.4](https://github.com/DigitalOcean-User-Projects/Articles-and-Tutorials/blob/master/set_hostname_fqdn_on_ubuntu_centos.md)
-- To apply the new host name without rebooting the system type: `hostname example.com`, and then then check if the correct FQDN is set: `hostname -f`
+- To apply the new host name without rebooting the system type: `hostname mysite.com`, and then then check if the correct FQDN is set: `hostname -f`
 
 
 ## Configure Nginx
@@ -280,16 +303,16 @@ Now upload from the `/nginx` folder both the `nginx.conf` and `mime.types` files
 
 Upload from the `/nginx` folder the config files to: `/etc/nginx`, frist the `hbp5` and (when using Kirby CMS) the `kirby` folders.
 
-Now rename `kirby.conf` file:
+Now rename `kirby-mysite.conf` file to reflect your project:
 
 ```
-kirby-example.conf
+kirby-mysite.conf
 ```
 
-Update the line `fastcgi_pass unix:/var/run/php5-fpm.sock;` in `kirby-example.conf` to link to the correct example socket (to be created later the ‘configure php-fm’ set below!):
+Update the line `fastcgi_pass unix:/var/run/php5-fpm-mysite.sock;` in `kirby-mysite.conf` to link to the correct mysite socket (to be created later the ‘configure php-fm’ see below!):
 
 ```
-fastcgi_pass unix:/var/run/php5-fpm-example.sock;
+fastcgi_pass unix:/var/run/php5-fpm-mysite.sock;
 ```
 
 ### Sites available
@@ -297,23 +320,24 @@ fastcgi_pass unix:/var/run/php5-fpm-example.sock;
 Delete the `default` file in the `sites-available` folder and upload (again from the `/nginx` folder) the following files three:
 
 - no-default
-- example.com
-- ssl.example.com
+- sll.no-default
+- mysite.com
+- ssl.mysite.com
 
-(Make sure to delete the `default` symlink!)
+(Make sure to delete the `default` symlink in `sites-enabled`!)
 
-Rename and edit the contents of the `example.com` and `ssl.example.com` files to follow your server/website setup — among other things, include the correct kirby conf file created in the previous step:
+Rename and edit the contents of the `mysite.com` and `ssl.mysite.com` files to follow your server/website setup — among other things, include the correct kirby conf file created in the previous step:
 
 ```
-include kirby/kirby-example.conf;
+include kirby/kirby-mysite.conf;
 ```
 
 ### Sites enabled
 
-Login with `root` user and active the desired virtual hosts (don’t forget to angel the no-default site):
+Login with `root` user and active the desired virtual hosts (don’t forget to activate the no-default site too!):
 
 ```
-$ ln -s /etc/nginx/sites-available/example.com /etc/nginx/sites-enabled/example.com
+$ ln -s /etc/nginx/sites-available/mysite.com /etc/nginx/sites-enabled/mysite.com
 $ ln -s /etc/nginx/sites-available/no-default /etc/nginx/sites-enabled/no-default
 ```
 
@@ -366,7 +390,7 @@ Note that users may still override umask in their own `~/.profile` or `~/.bashrc
 
 Only when PHP-FM is installed and being used continue…
 
-Add to the to `/etc/init/php-fpm.conf` file, just after line 7 (`stop on runlevel [016]`) the following:
+Add to the to `/etc/init/php5-fpm.conf` file, just after line 7 (`stop on runlevel [016]`) the following:
 
 ```
 umask 002
@@ -390,49 +414,49 @@ A file called `www.conf` already exists which can be copied to create more pool 
 Create a copy of the `www.conf` file and rename it:
 
 ```
-example.conf
+mysite.conf
 ```
 
 Backup (rename) `www.conf` by adding a tilde: `www.conf~`
 
 ### Edit conf file
 
-Edit the following fields in `example.conf` file:
+Edit the following fields in `mysite.conf` file:
 
-- Pool name. It is on the top `[www]`. Rename it to `[example]`.
+- Pool name. It is on the top `[www]`. Rename it to `[mysite]`.
 - The user and group fields:
 
 ```
-user = example
-group = example
+user = mysite/user
+group = mysite/user
 ```
 
 - The socket file name (every pool should have its own separate socket):
 
 ```
-listen = /var/run/php5-fpm-example.sock
+listen = /var/run/php5-fpm-mysite.sock
 ```
 
 ### Socket files
 
-If not already done in ‘configure nginx’ step, make sure the `example` site uses the correct socket file to connect to fpm:
+If __not already done__ in ‘configure nginx’ step, make sure the `mysite` site uses the correct socket file to connect to fpm:
 
-Rename the earlier uploaded `/etc/nginx/kirby/kirby.conf` file to:
-
-```
-kirby-example.conf
-```
-
-Update the line `fastcgi_pass unix:/var/run/php5-fpm.sock;` to link to the correct example socket:
+Rename the earlier uploaded `/etc/nginx/kirby/kirby-mysite.conf` file to:
 
 ```
-fastcgi_pass unix:/var/run/php5-fpm-example.sock;
+kirby-mysite.conf
 ```
 
-If not already done in ‘configure nginx’ step, open the earlier uploaded and configured `/etc/nginx/sites-available/(ssl.)example.com` files, and include the correct kirby conf file created in the previous step:
+Update the line `fastcgi_pass unix:/var/run/php5-fpm-exmample.sock;` to link to the correct mysite socket:
 
 ```
-include kirby/kirby-example.conf;
+fastcgi_pass unix:/var/run/php5-fpm-mysite.sock;
+```
+
+If not already done in ‘configure nginx’ step, open the earlier uploaded and configured `/etc/nginx/sites-available/(ssl.)mysite.com` files, and include the correct kirby conf file created in the previous step:
+
+```
+include kirby/kirby-mysite.conf;
 ```
 
 Now login as root user and restart php-fpm:
@@ -457,9 +481,22 @@ Do you make use of git submodules? See _flavour 2_ below!
 
 ### Install Git
 
+Install the [latest Git package for Ubuntu](http://j.mp/1CtAo5o), do:
+
+```
+$ add-apt-repository ppa:git-core/ppa -y
+$ apt-get update
+$ apt-get install git
+$ apt-get autoremove && apt-get autoclean
+$ git --version
+```
+
+Or to install the most current __stable__ version for Ubuntu, do:
+
 ```
 $ apt-get install git-core
 $ apt-get autoremove && apt-get autoclean
+$ git --version
 ```
 
 ### Create ‘public’ folders
@@ -467,31 +504,31 @@ $ apt-get autoremove && apt-get autoclean
 Create the following folders with `root` user (`-p` makes sure all the directories that don’t exists already are created, not just the last one):
 
 ```
-$ mkdir -p /usr/share/nginx/www/example.com/public
-$ mkdir -p /usr/share/nginx/www/stage.example.com/public
-$ mkdir -p /usr/share/nginx/repo/example.git
-$ mkdir -p /usr/share/nginx/repo/stage.example.git
+$ mkdir -p /usr/share/nginx/www/mysite.com/public
+$ mkdir -p /usr/share/nginx/www/stage.mysite.com/public
+$ mkdir -p /usr/share/nginx/repo/mysite.git
+$ mkdir -p /usr/share/nginx/repo/stage.mysite.git
 ```
 
 ### Update group and user permissions
 
-Now change the group and ownership of the `/public` and `/example.git` folders:
+Now change the group and ownership of the `/public` and `/mysite.git` folders:
 
 ```
-$ sudo chown -R example:example /usr/share/nginx/www/example.com/public
-$ sudo chown -R example:example /usr/share/nginx/www/stage.example.com/public
-$ sudo chown -R example:example /usr/share/nginx/repo/example.git
-$ sudo chown -R example:example /usr/share/nginx/repo/stage.example.git
+$ sudo chown -R mysite:mysite /usr/share/nginx/www/mysite.com/public
+$ sudo chown -R mysite:mysite /usr/share/nginx/www/stage.mysite.com/public
+$ sudo chown -R mysite:mysite /usr/share/nginx/repo/mysite.git
+$ sudo chown -R mysite:mysite /usr/share/nginx/repo/stage.mysite.git
 ```
 
 Move the `/usr/share/nginx/html/50x.html` file to the newly created `/www` directory: `/usr/share/nginx/www`, and then delete the `/html` directory.
 
 ### Initialize _bare_ git repositories
 
-Login (SSH) with `example` user and initialize the bare Git repositories:
+Login (SSH) with `mysite` user and initialize the bare Git repositories:
 
 ```
-$ cd /usr/share/nginx/repo/example.git
+$ cd /usr/share/nginx/repo/mysite.git
 $ git init --bare
 ```
 
@@ -499,9 +536,9 @@ $ git init --bare
 
 ### Git hooks
 
-Make sure to login (either SSH or SFTP) with the correct `example` user when uploading the files, otherwise the file group/owner will be incorrect!
+Make sure to login (either SSH or SFTP) with the correct `mysite` user when uploading the files, otherwise the file group/owner will be incorrect!
 
-Upload to the `/usr/share/nginx/repo/example.git/hooks` folder of the bare git repository the `post-receive.bare.sample` file, located in the `/git/hooks` folder (make sure to enter the correct virtual host, etc.) and after uploading rename to `post-receive`.
+Upload to the `/usr/share/nginx/repo/mysite.git/hooks` folder of the bare git repository the `post-receive.bare.sample` file, located in the `/git/hooks` folder (make sure to enter the correct WWW_DIR and GIT_DIR paths) and after uploading rename to `post-receive`.
 
 Set permissions of the `post-receive` file to `775`.
 
@@ -509,15 +546,15 @@ Repeat for staging (and other possible) (sub)domain(s).
 
 ### Sparse checkout
 
-Upload to the `/usr/share/nginx/repo/example.git/info` folder of the bare git repositories the `sparse-checkout.sample` file (set permissions to `664`), located in the `/git/info` folder (make sure to enter the correct path-to-files) and after uploading rename to `sparse-checkout`.
+Upload to the `/usr/share/nginx/repo/mysite.git/info` folder of the bare git repositories the `sparse-checkout.sample` file (set permissions to `664`), located in the `/git/info` folder (make sure to enter the correct path-to-files) and after uploading rename to `sparse-checkout`.
 
 ### Add remote stage and production repositories
 
 Now add the remote stage and production repositories to your local repository:
 
 ```
-$ git remote add stage ssh://example@hostname-or-ip/usr/share/nginx/repo/stage.exammple.git`
-$ git remote add production ssh://user@hostname-or-ip/usr/share/nginx/repo/example.git
+$ git remote add stage ssh://mysite@hostname-or-ip/usr/share/nginx/repo/stage.mysite.git
+$ git remote add production ssh://mysite@hostname-or-ip/usr/share/nginx/repo/mysite.git
 ```
 
 ---
@@ -531,9 +568,14 @@ Do you not make use of git submodules? See _flavour 1_ above!
 
 ### Install Git
 
+Install the [latest Git package for Ubuntu](http://j.mp/1CtAo5o), do:
+
 ```
-$ apt-get install git-core
+$ add-apt-repository ppa:git-core/ppa -y
+$ apt-get update
+$ apt-get install git
 $ apt-get autoremove && apt-get autoclean
+$ git --version
 ```
 
 ### Create ‘public’ folders
@@ -541,8 +583,8 @@ $ apt-get autoremove && apt-get autoclean
 Create the following folders with `root` user (`-p` makes sure all the directories that don’t exists already are created, not just the last one):
 
 ```
-$ mkdir -p /usr/share/nginx/www/example.com/public
-$ mkdir -p /usr/share/nginx/www/stage.example.com/public
+$ mkdir -p /usr/share/nginx/www/mysite.com/public
+$ mkdir -p /usr/share/nginx/www/stage.mysite.com/public
 ```
 
 ### Update group and user permissions
@@ -550,28 +592,38 @@ $ mkdir -p /usr/share/nginx/www/stage.example.com/public
 Change group and ownership of the `/public` folders:
 
 ```
-$ sudo chown -R example:example /usr/share/nginx/www/example.com/public
-$ sudo chown -R example:example /usr/share/nginx/www/stage.example.com/public
+$ sudo chown -R mysite:mysite /usr/share/nginx/www/mysite.com/public
+$ sudo chown -R mysite:mysite /usr/share/nginx/www/stage.mysite.com/public
 ```
 
 Move the `/usr/share/nginx/html/50x.html` file to the newly created `/www` directory: `/usr/share/nginx/www`, and then delete the `/html` directory.
 
 ### Initialize git repositories
 
-Login (SSH) with `example` user and initialize the Git repositories:
+Login (SSH) with `mysite` user and initialize the Git repositories:
 
 ```
-$ cd /usr/share/nginx/www/example.com/public
+$ cd /usr/share/nginx/www/mysite.com/public
 $ git init
 ```
 
 (Repeat for staging domain!)
 
+### Git config
+
+Make sure to login (either SSH or SFTP) with the correct `mysite` user when uploading the file, otherwise the file group/owner will be incorrect!
+
+Upload to the `/usr/share/nginx/www/mysite.com/.git` folder the `config.submodules.sample` file, located in the `/git` folder, and after uploading rename to `config` (after backing up the original `config` file by adding a tilde: `config~`).
+
+Set permissions of the `config` file to `664`.
+
+Repeat for staging (and other (sub)domains).
+
 ### Git hooks
 
-Make sure to login (either SSH or SFTP) with the correct `example` user when uploading the file, otherwise the file group/owner will be incorrect!
+Make sure to login (either SSH or SFTP) with the correct `mysite` user when uploading the file, otherwise the file group/owner will be incorrect!
 
-Upload to the `/usr/share/nginx/www/example.com/.git/hooks` folder the `post-receive.submodules.sample` file, located in the `/git/hooks` folder (make sure to enter the correct virtual host, etc.) and after uploading rename to `post-receive`.
+Upload to the `/usr/share/nginx/www/mysite.com/.git/hooks` folder the `post-receive.submodules.sample` file, located in the `/git/hooks` folder and after uploading rename to `post-receive`.
 
 Set permissions of the `post-receive` file to `775`.
 
@@ -579,15 +631,15 @@ Repeat for staging (and other (sub)domains).
 
 ### Sparse checkout
 
-Now add to the `/usr/share/nginx/www/example.com/.git/info` folder the `sparse-checkout.sample` file (set permissions to `664`), located in the `/git/info` folder (make sure to enter the correct path-to-files) and after uploading rename to `sparse-checkout`.
+Now add to the `/usr/share/nginx/www/mysite.com/.git/info` folder the `sparse-checkout.sample` file (set permissions to `664`), located in the `/git/info` folder (make sure to enter the correct path-to-files) and after uploading rename to `sparse-checkout`.
 
 ### Add remote stage and production repositories
 
 Now add the remote stage and production repositories to your local repository:
 
 ```
-$ git remote add stage ssh://example@hostname-or-ip/usr/share/nginx/www/stage.exammple.com/public
-$ git remote add production ssh://user@hostname-or-ip/usr/share/nginx/www/example.com/public
+$ git remote add stage ssh://mysite@hostname-or-ip/usr/share/nginx/www/stage.mysite.com/public
+$ git remote add production ssh://mysite@hostname-or-ip/usr/share/nginx/www/mysite.com/public
 ```
 
 
@@ -683,11 +735,11 @@ $ service dropbox start|stop|reload|force-reload|restart|status
 
 ### Symlink folders
 
-Still logged in as `root` user, add symbolic links to the `public` content folders of the example.com site:
+Still logged in as `root` user, add symbolic links to the `public` content folders of the mysite.com site:
 
 ```
-$ example.com  `ln -s /home/dropbox/Dropbox/example.com/content/ /usr/share/nginx/www/example.com/public/content
-$ stage.example.com  `ln -s /home/dropbox/Dropbox/example.com/content/ /usr/share/nginx/www/stage.example.com/public/content
+$ mysite.com  `ln -s /home/dropbox/Dropbox/mysite.com/content/ /usr/share/nginx/www/mysite.com/public/content
+$ stage.mysite.com  `ln -s /home/dropbox/Dropbox/mysite.com/content/ /usr/share/nginx/www/stage.mysite.com/public/content
 ```
 
 ### Notes
@@ -706,13 +758,13 @@ TBA
 To change all the directories to 755 (-rwxr-xr-x):
 
 ```
-$ find /usr/share/nginx/www/example.com/public/ -type d -exec chmod 775 {} \;
+$ find /usr/share/nginx/www/mysite.com/public/ -type d -exec chmod 775 {} \;
 ```
 
 $ To change all the files to 644 (-rw-r--r--):
 
 ```
-find /usr/share/nginx/www/example.com/public/ -type f -exec chmod 664 {} \;
+find /usr/share/nginx/www/mysite.com/public/ -type f -exec chmod 664 {} \;
 ```
 
 

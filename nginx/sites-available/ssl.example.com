@@ -6,18 +6,6 @@
 # the right one -- http://wiki.nginx.org/Pitfalls#Server_Name
 
 server {
-  listen [::]:80;
-  listen 80;
-
-  # Listen on both hosts
-  server_name example.com www.example.com;
-
-  # and redirect to the https host (declared below)
-  # avoiding http://www -> https://www -> https:// chain.
-  return 301 https://example.com$request_uri;
-}
-
-server {
   listen [::]:443 ssl http2;
   listen 443 ssl http2;
 
@@ -35,15 +23,15 @@ server {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 server {
-  # listen [::]:443 ssl http2 accept_filter=dataready;  # for FreeBSD
-  # listen 443 ssl http2 accept_filter=dataready;  # for FreeBSD
-  # listen [::]:443 ssl http2 deferred;  # for Linux
-  # listen 443 ssl http2 deferred;  # for Linux
   listen [::]:443 ssl http2;
   listen 443 ssl http2;
 
   # The host name to respond to
   server_name example.com;
+
+  # SLL domain certificates
+  ssl_certificate      /etc/letsencrypt/live/example.com.crt;
+  ssl_certificate_key  /etc/letsencrypt/live/example.com.key;
 
   # Path for static files
   root /usr/share/nginx/wwwroot/example.com/www;
@@ -65,10 +53,13 @@ server {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  # Let's Encrypt challenge
-  location /.well-known/acme-challenge {
-    root /usr/share/nginx/wwwroot/example.com;
-  }
+  # Redirect old forgotten and rusty URIs
+  # include kirby/detour-example.conf;
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # Include the Kirby CMS specific URI config set
+  include kirby/kirby-example.conf;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -77,18 +68,8 @@ server {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  # Include SSL and SPDY modules
-  include h5bp/directive-only/ssl.conf;
-  include h5bp/directive-only/extra-security.conf;
-  include h5bp/directive-only/ssl-stapling.conf;
-
-  # Include the Kirby CMS specific URI config set
-  include kirby/kirby-example.conf;
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  # Redirect old forgotten and rusty URIs
-  # include kirby/detour-example.conf;
+  # Include the SSL h5bp config set
+  include h5bp/secure.conf;
 }
 
 
@@ -97,18 +78,6 @@ server {
 # ------------------------------------------------------------------------------
 
 # Remove the "www." at the beginning of URLs
-
-server {
-  listen [::]:80;
-  listen 80;
-
-  # Listen on both hosts
-  server_name stage.example.com www.stage.example.com;
-
-  # And redirect to the https host (declared below)
-  # avoiding http://www -> https://www -> https:// chain.
-  return 301 https://stage.example.com$request_uri;
-}
 
 server {
   listen [::]:443 ssl http2;
@@ -128,15 +97,15 @@ server {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 server {
-  # listen [::]:443 ssl http2 accept_filter=dataready;  # for FreeBSD
-  # listen 443 ssl http2 accept_filter=dataready;  # for FreeBSD
-  # listen [::]:443 ssl http2 deferred;  # for Linux
-  # listen 443 ssl http2 deferred;  # for Linux
   listen [::]:443 ssl http2;
   listen 443 ssl http2;
 
   # Listen on the non-www host
   server_name stage.example.com;
+
+  # SLL domain certificates
+  ssl_certificate      /etc/letsencrypt/live/example.com.crt;
+  ssl_certificate_key  /etc/letsencrypt/live/example.com.key;
 
   # Path for static files
   root /usr/share/nginx/wwwroot/example.com/stage;
@@ -158,22 +127,8 @@ server {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  # Let's Encrypt challenge
-  location /.well-known/acme-challenge {
-    root /usr/share/nginx/wwwroot/example.com;
-  }
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  # Include the basic h5bp config set
-  include h5bp/basic.conf;
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  # Include SSL and SPDY modules
-  include h5bp/directive-only/ssl.conf;
-  include h5bp/directive-only/extra-security.conf;
-  include h5bp/directive-only/ssl-stapling.conf;
+  # Redirect old forgotten and rusty URIs
+  # include kirby/detour-example.conf;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -182,6 +137,11 @@ server {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  # Redirect old forgotten and rusty URIs
-  # include kirby/detour-example.conf;
+  # Include the basic h5bp config set
+  include h5bp/basic.conf;
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # Include the SSL h5bp config set
+  include h5bp/secure.conf;
 }

@@ -18,12 +18,14 @@
 # !.gitkeep
 # !.gitmodules
 
-!gruntfile.js
-!Gruntfile.js
-!package.json
-!.jshintrc
+!/gruntfile.js
+!/Gruntfile.js
+!/package.json
 
-!.editorconfig
+!/.editorconfig
+
+!/.eslintrc.json
+!/.jshintrc
 
 !readme.txt
 !readme.html
@@ -39,28 +41,22 @@
 !assets/javascript/head.scripts.js
 !assets/javascript/main.scripts.js
 !assets/javascript/mobile.scripts.js
+!assets/javascript/photoswipe.scripts.js
 
 # Folders
 
-!assets/javascript/classes/*/*
-!assets/javascript/classes/*
-!assets/javascript/classes/
+!assets/javascript/dev/*/*
+!assets/javascript/dev/*
+!assets/javascript/dev/
 
-!assets/javascript/plugins/*/*
-!assets/javascript/plugins/*
-!assets/javascript/plugins/
+!assets/javascript/lib/*/*/*
+!assets/javascript/lib/*/*
+!assets/javascript/lib/*
+!assets/javascript/lib/
 
-!assets/javascript/polyfills/*/*
-!assets/javascript/polyfills/*
-!assets/javascript/polyfills/
-
-!assets/javascript/utils/*/*
-!assets/javascript/utils/*
-!assets/javascript/utils/
-
-!assets/javascript/vendor/*/*
-!assets/javascript/vendor/*
-!assets/javascript/vendor/
+!assets/javascript/modules/*/*
+!assets/javascript/modules/*
+!assets/javascript/modules/
 
 !assets/stylesheets/scss/*/*/*
 !assets/stylesheets/scss/*/*

@@ -35,7 +35,7 @@ server {
   root /usr/share/nginx/wwwroot/example.com/www;
 
   # Index
-  index index.html index.htm index.php;
+  index index.html index.php;
 
   # Specify a charset
   charset utf-8;
@@ -52,14 +52,14 @@ server {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   # Let's Encrypt challenge
-  location /.well-known/acme-challenge {
-    root /usr/share/nginx/wwwroot/example.com;
-  }
+  # location /.well-known/acme-challenge {
+  #   root /usr/share/nginx/wwwroot/example.com;
+  # }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  # Include the basic h5bp config set
-  include h5bp/basic.conf;
+  # Redirect old forgotten and rusty URIs
+  # include kirby/detour-example.conf;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -68,8 +68,8 @@ server {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  # Redirect old forgotten and rusty URIs
-  # include kirby/detour-example.conf;
+  # Include the basic h5bp config set
+  include h5bp/basic.conf;
 }
 
 
@@ -124,14 +124,14 @@ server {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   # Let's Encrypt challenge
-  location /.well-known/acme-challenge {
-    root /usr/share/nginx/wwwroot/example.com;
-  }
+  # location /.well-known/acme-challenge {
+  #   root /usr/share/nginx/wwwroot/example.com;
+  # }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  # Include the basic h5bp config set
-  include h5bp/basic.conf;
+  # Redirect old forgotten and rusty URIs
+  # include kirby/detour-example.conf;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -140,6 +140,6 @@ server {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  # Redirect old forgotten and rusty URIs
-  # include kirby/detour-example.conf;
+  # Include the basic h5bp config set
+  include h5bp/basic.conf;
 }
